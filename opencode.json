@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "incident-mcp": {
+      "type": "local",
+      "command": [
+        "uv",
+        "run",
+        "incident-mcp"
+      ],
+      "cwd": "/Users/a.starchenko/Documents/git/tinymcp",
+      "environment": {
+        "INCIDENT_DB_URL": "postgresql://oncall:oncall@localhost:5433/oncall",
+        "RUNBOOKS_DIR": "homework-stand/runbooks"
+      },
+      "enabled": true,
+      "timeout": 10000
+    }
+  }
+}

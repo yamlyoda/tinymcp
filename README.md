@@ -124,6 +124,20 @@ Inspector откроется на `http://127.0.0.1:6274` (токен — в в�
 - невалидные аргументы дают `isError` с понятным текстом;
 - имена tools соответствуют namespacing-правилам.
 
+## Подключение к OpenCode
+
+Конфигурация — `opencode.json` в корне репозитория: сервер `incident-mcp`
+подключается как локальный MCP (stdio) через `uv run incident-mcp` с явными
+`cwd`, переменными окружения, `enabled: true` и `timeout: 10000` мс на
+получение списка tools.
+
+Проверка подключения:
+
+```bash
+opencode mcp list   # → incident-mcp connected
+opencode run "Выведи имена доступных MCP-инструментов с префиксом incident"
+```
+
 ## Тесты
 
 ```bash
@@ -146,6 +160,7 @@ tinymcp/
 ├── pyproject.toml              # конфигурация проекта (FastMCP, Python 3.12, uv)
 ├── SKILLS.md                   # спецификация tools и требований к качеству
 ├── ACTION.md                   # план реализации
+├── opencode.json               # подключение incident-mcp к OpenCode (local/stdio)
 ├── src/incident_mcp/
 │   ├── server.py               # сборка FastMCP-сервера, точка входа
 │   ├── db.py                   # пул соединений asyncpg
