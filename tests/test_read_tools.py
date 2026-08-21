@@ -6,13 +6,6 @@ from datetime import UTC, datetime
 
 import pytest
 
-from incident_mcp.server import create_server
-
-
-@pytest.fixture
-def mcp():
-    return create_server()
-
 
 @pytest.mark.asyncio
 async def test_incidents_search_returns_rows(mcp, mock_connection):

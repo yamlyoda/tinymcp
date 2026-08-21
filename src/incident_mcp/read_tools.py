@@ -95,7 +95,10 @@ def register_read_tools(mcp: FastMCP) -> None:
                 f"Неверный status '{status}'. Допустимо: {sorted(STATUSES)}."
             )
 
-        query = "SELECT id, service, severity, status, opened_at, title, summary FROM incidents WHERE service = $1"
+        query = (
+            "SELECT id, service, severity, status, opened_at, title, summary "
+            "FROM incidents WHERE service = $1"
+        )
         params: list[Any] = [service]
 
         if severity is not None:
@@ -221,8 +224,10 @@ def register_read_tools(mcp: FastMCP) -> None:
             SELECT date_trunc('{bucket}', ts) AS bucket,
                    count(*) AS requests,
                    round(avg(duration_ms)::numeric, 1) AS avg_ms,
-                   round(percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::numeric, 1) AS p95_ms,
-                   round(100.0 * count(*) FILTER (WHERE cache_hit) / count(*), 1) AS hit_rate_pct
+                   round(percentile_cont(0.95) WITHIN GROUP
+                         (ORDER BY duration_ms)::numeric, 1) AS p95_ms,
+                   round(100.0 * count(*) FILTER (WHERE cache_hit)
+                         / count(*), 1) AS hit_rate_pct
             FROM request_logs
             WHERE ts >= $1 AND endpoint = $2
             GROUP BY 1 ORDER BY 1

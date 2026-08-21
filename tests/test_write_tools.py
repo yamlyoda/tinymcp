@@ -4,13 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from incident_mcp.server import create_server
-
-
-@pytest.fixture
-def mcp():
-    return create_server()
-
 
 @pytest.mark.asyncio
 async def test_incident_acknowledge_changes_status(mcp, mock_connection):

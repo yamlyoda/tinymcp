@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 
 from incident_mcp.server import create_server
 
@@ -18,6 +19,29 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 
+class _McpWrapper:
+    """Обёртка над FastMCP-сервером с публичным `call_tool`.
+
+    FastMCP 3.x в `call_tool` оборачивает пользовательские исключения в
+    `ToolError`, сохраняя исходное исключение как `__cause__`. Тесты ожидают
+    именно исходный `ValueError`, поэтому разворачиваем `ToolError` обратно
+    в cause. Не патчим сам метод сервера, чтобы не ломать внутренний
+    middleware-цикл FastMCP.
+    """
+
+    def __init__(self, server: FastMCP) -> None:
+        self._server = server
+
+    async def call_tool(self, name: str, arguments: dict | None = None):
+        try:
+            return await self._server.call_tool(name, arguments)
+        except ToolError as exc:
+            cause = exc.__cause__
+            if cause is not None:
+                raise cause from exc
+            raise
+
+
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
@@ -25,27 +49,8 @@ def anyio_backend():
 
 @pytest.fixture
 def mcp():
-    """Сервер с публичным `call_tool`, совместимым с тестами.
-
-    FastMCP 3.x в `call_tool` оборачивает пользовательские исключения в
-    `ToolError`, сохраняя исходное исключение как `__cause__`. Тесты ожидают
-    именно исходный `ValueError`, поэтому подменяем `call_tool` на реальный
-    вызов с разворачиванием `ToolError` обратно в cause.
-    """
-    server: FastMCP = create_server()
-    real_call_tool = server.call_tool
-
-    async def call_tool(name: str, arguments: dict | None = None):
-        try:
-            return await real_call_tool(name, arguments)
-        except Exception as exc:
-            cause = exc.__cause__
-            if cause is not None:
-                raise cause
-            raise
-
-    server.call_tool = call_tool  # type: ignore[method-assign]
-    return server
+    """Сервер с публичным `call_tool`, совместимым с тестами."""
+    return _McpWrapper(create_server())
 
 
 @pytest.fixture
