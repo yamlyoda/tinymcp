@@ -111,8 +111,11 @@ uv run incident-mcp
 ## Проверка в MCP Inspector
 
 ```bash
-uv run fastmcp dev inspector incident-mcp
+# модульный режим: python -m incident_mcp.server под капотом
+uv run fastmcp dev inspector -m incident_mcp.server
 ```
+
+Inspector откроется на `http://127.0.0.1:6274` (токен — в выводе команды).
 
 В Inspector проверяется:
 
