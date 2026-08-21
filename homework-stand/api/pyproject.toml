@@ -1,0 +1,14 @@
+[project]
+name = "payments-api"
+version = "1.5.0"
+description = "Учебный сервис инцидентного стенда (занятие 4, MCP)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "psycopg[binary]>=3.2.0",
+    "psycopg-pool>=3.2.0",
+]
+
+[tool.uv]
+package = false

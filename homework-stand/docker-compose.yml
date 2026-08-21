@@ -1,0 +1,64 @@
+name: incident-stand
+
+# Исходники запекаются в образы, bind-mount'ов нет намеренно: путь к уроку
+# содержит ':', и docker-демон отвергает такие пути в bind-mount.
+# После правки кода сервиса пересоберите его:  docker compose up -d --build api
+
+services:
+  db:
+    build: ./db
+    # Стенд имитирует небольшой инстанс: без параллельных воркеров на запрос.
+    command:
+      - postgres
+      - -c
+      - max_parallel_workers_per_gather=0
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oncall}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oncall}
+      POSTGRES_DB: ${POSTGRES_DB:-oncall}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oncall} -d ${POSTGRES_DB:-oncall}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-oncall}:${POSTGRES_PASSWORD:-oncall}@db:5432/${POSTGRES_DB:-oncall}
+      SERVICE_NAME: payments-api
+      APP_VERSION: v1.5.0
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-60}
+      PRICE_COMPONENTS: ${PRICE_COMPONENTS:-200}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  simulator:
+    build: ./simulator
+    profiles: ["sim"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-oncall}:${POSTGRES_PASSWORD:-oncall}@db:5432/${POSTGRES_DB:-oncall}
+      API_BASE_URL: http://api:8080
+      SIM_DURATION_SECONDS: ${SIM_DURATION_SECONDS:-300}
+      SIM_RPS: ${SIM_RPS:-20}
+      SIM_CONCURRENCY: ${SIM_CONCURRENCY:-16}
+      SIM_BASELINE_PRICE_ROWS: ${SIM_BASELINE_PRICE_ROWS:-60000}
+      SIM_BASELINE_REQUEST_LOGS: ${SIM_BASELINE_REQUEST_LOGS:-4000}
+      SIM_ORDER_POOL: ${SIM_ORDER_POOL:-200}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:
