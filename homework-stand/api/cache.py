@@ -27,38 +27,41 @@ class ResponseCache:
 
     def __init__(self, ttl_seconds: float = 60.0) -> None:
         self._ttl = ttl_seconds
-        self._entries: list[Entry] = []
+        self._entries: dict[str, Entry] = {}
         self.hits = 0
         self.misses = 0
 
     @staticmethod
-    def build_key(endpoint: str, params: Mapping[str, Any], request_id: str) -> str:
+    def build_key(endpoint: str, params: Mapping[str, Any]) -> str:
         """Ключ кэша по контексту запроса.
 
-        Ключ обязан полностью описывать контекст, иначе есть риск отдать
-        клиенту чужой ответ. Поэтому кладём в него весь контекст запроса.
+        В ключ входят только семантические параметры запроса. Служебные
+        идентификаторы вроде request_id класть нельзя: они уникальны для
+        каждого запроса, и кэш перестаёт попадать (дефект v1.5.0).
         """
         payload = {
             "endpoint": endpoint,
             "params": dict(sorted(params.items())),
-            "request_id": request_id,
         }
         raw = json.dumps(payload, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def get(self, key: str) -> Any | None:
-        now = time.monotonic()
-        for entry in self._entries:
-            if entry.key == key and entry.expires_at > now:
+        entry = self._entries.get(key)
+        if entry is not None:
+            if entry.expires_at > time.monotonic():
                 self.hits += 1
                 return entry.value
+            del self._entries[key]
         self.misses += 1
         return None
 
     def set(self, key: str, value: Any) -> None:
-        self._entries.append(Entry(key=key, value=value, expires_at=time.monotonic() + self._ttl))
-        # Записи с истёкшим TTL всё равно не отдаются из get(), так что
-        # отдельная чистка не нужна.
+        now = time.monotonic()
+        expired = [k for k, e in self._entries.items() if e.expires_at <= now]
+        for k in expired:
+            del self._entries[k]
+        self._entries[key] = Entry(key=key, value=value, expires_at=now + self._ttl)
 
     @property
     def size(self) -> int:

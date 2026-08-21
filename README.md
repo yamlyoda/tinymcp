@@ -184,6 +184,7 @@ tinymcp/
 ├── pyproject.toml              # конфигурация проекта (FastMCP, Python 3.12, uv)
 ├── SKILLS.md                   # спецификация tools и требований к качеству
 ├── ACTION.md                   # план реализации
+├── RESULTS.md                  # зафиксированные результаты прогона демо-стенда
 ├── opencode.json               # подключение incident-mcp к OpenCode (local/stdio)
 ├── src/incident_mcp/
 │   ├── server.py               # сборка FastMCP-сервера, точка входа

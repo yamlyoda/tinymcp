@@ -92,11 +92,9 @@ def order_price(order_id: str, request: Request, currency: str = "RUB") -> JSONR
             content={"error": "unsupported currency", "supported": ["RUB", "USD", "EUR"]},
         )
 
-    request_id = request.state.request_id
     key = cache.build_key(
         endpoint="/api/v1/orders/{order_id}/price",
         params={"order_id": order_id, "currency": currency},
-        request_id=request_id,
     )
 
     cached = cache.get(key)
@@ -112,7 +110,6 @@ def order_price(order_id: str, request: Request, currency: str = "RUB") -> JSONR
         write_app_log(
             "WARN",
             f"response cache grew to {cache.size} entries, hit_rate={cache.stats()['hit_rate']}",
-            request_id,
         )
     return JSONResponse(content=payload)
 
