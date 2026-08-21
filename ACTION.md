@@ -18,50 +18,57 @@
 ## Этапы реализации
 
 ### Этап 1. Подготовка проекта
-- [ ] `git init` ✅
-- [ ] `.gitignore` ✅
-- [ ] `pyproject.toml` (FastMCP, Python 3.12, uv)
-- [ ] `README.md` — описание проекта, стек, запуск
+- [x] `git init`
+- [x] `.gitignore`
+- [x] `pyproject.toml` (FastMCP, Python 3.12, uv)
+- [x] `README.md` — описание проекта, стек, запуск
 
 ### Этап 2. Спецификация tools (SKILLS.md)
-- [ ] `SKILLS.md` ✅ — описание всех tools и требований к ним
+- [x] `SKILLS.md` — описание всех tools и требований к ним
 
 ### Этап 3. Реализация read-tools
-- [ ] `incidents_search(service, severity?, status?, time_range?)`
-- [ ] `incident_get(incident_id)`
-- [ ] `deploys_recent(service, limit?)`
-- [ ] `logs_query(service, time_range, query?, level?)`
-- [ ] `metrics_latency(endpoint, time_range, bucket?)`
-- [ ] `runbook_get(service)`
-- [ ] `service_catalog_get(service)`
+- [x] `incidents_search(service, severity?, status?, time_range?)`
+- [x] `incident_get(incident_id)`
+- [x] `deploys_recent(service, limit?)`
+- [x] `logs_query(service, time_range, query?, level?)`
+- [x] `metrics_latency(endpoint, time_range, bucket?)`
+- [x] `runbook_get(service)`
+- [x] `service_catalog_get(service)`
 
 ### Этап 4. Реализация write-tools
-- [ ] `incident_acknowledge(incident_id)` — **меняет состояние в БД**
-- [ ] `incident_create_summary(incident_id, summary)` — **меняет состояние в БД**
+- [x] `incident_acknowledge(incident_id)` — **меняет состояние в БД**
+- [x] `incident_create_summary(incident_id, summary)` — **меняет состояние в БД**
 
 ### Этап 5. Качество tools
-- [ ] У каждого tool есть `title` и `description` (что делает / когда / side effects)
-- [ ] Валидация аргументов через `inputSchema` (аннотации типов / Pydantic)
-- [ ] Структурированные ошибки (`isError`, понятный текст)
-- [ ] Имена уникальны и namespaced: `incidents_*`, `incident_*`, `deploys_*`,
+- [x] У каждого tool есть `title` и `description` (что делает / когда / side effects)
+- [x] Валидация аргументов через `inputSchema` (аннотации типов / Pydantic)
+- [x] Структурированные ошибки (`isError`, понятный текст)
+- [x] Имена уникальны и namespaced: `incidents_*`, `incident_*`, `deploys_*`,
       `logs_*`, `metrics_*`, `runbook_*`, `service_*`
-- [ ] Доменные tools, никакого `query(sql)` по всей базе
+- [x] Доменные tools, никакого `query(sql)` по всей базе
 
 ### Этап 6. Тесты проверки
-- [ ] Тесты для каждого read-tool (положительные + негативные сценарии)
-- [ ] Тесты для каждого write-tool (изменение состояния, side effects)
-- [ ] Тесты валидации аргументов (`isError` на невалидных входах)
-- [ ] Тесты отсутствия side effects у read-tools
+- [x] Тесты для каждого read-tool (положительные + негативные сценарии)
+- [x] Тесты для каждого write-tool (изменение состояния, side effects)
+- [x] Тесты валидации аргументов (`isError` на невалидных входах)
+- [x] Тесты отсутствия side effects у read-tools
 
 ### Этап 7. Проверка в MCP Inspector
-- [ ] Запуск сервера
-- [ ] Подключение MCP Inspector
-- [ ] Проверка read-tools
-- [ ] Проверка write-tools
-- [ ] Проверка обработки ошибок
+- [x] Запуск сервера
+- [x] Подключение MCP Inspector
+- [x] Проверка read-tools
+- [x] Проверка write-tools
+- [x] Проверка обработки ошибок
+
+> Проверка автоматизирована сквозным смоук-тестом
+> `tests/test_lifecycle_smoke.py`: реальный сервер как subprocess по stdio,
+> initialize → tools/list (9 tools, title/description/inputSchema) → вызовы
+> всех read- и write-tools → `isError` на невалидных аргументах → проверка,
+> что write-tools изменили состояние в БД. Тот же сценарий воспроизводится
+> в MCP Inspector (`uv run fastmcp inspector incident-mcp`).
 
 ### Этап 8. Финальная документация
-- [ ] `README.md` — финальная версия с описанием всех реализованных tools,
+- [x] `README.md` — финальная версия с описанием всех реализованных tools,
       архитектуры, запуска и проверки
 
 ## Структура репозитория
@@ -77,4 +84,3 @@ tinymcp/
 │   └── ...
 └── tests/         # тесты проверки
     └── ...
-```

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -87,7 +86,7 @@ class MCPServer:
         self.proc.terminate()
         try:
             await asyncio.wait_for(self.proc.wait(), timeout=5)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.proc.kill()
             await self.proc.wait()
 
@@ -150,7 +149,7 @@ async def test_full_lifecycle():
 
         res = await server.call_tool(
             "logs_query",
-            {"service": "payments-api", "time_range": "1h", "level": "WARN"},
+            {"service": "checkout", "time_range": "1h", "level": "WARN"},
         )
         assert res["content"]
 
@@ -210,13 +209,21 @@ async def test_full_lifecycle():
         res = await server.call_tool("incident_get", {"incident_id": "INC-001"})
         assert res["content"]
 
-        # Write-tools: acknowledge и summary.
-        res = await server.call_tool("incident_acknowledge", {"incident_id": "INC-002"})
+        # Write-tools: acknowledge и summary на открытом инциденте.
+        res = await server.call_tool("incident_acknowledge", {"incident_id": "INC-001"})
         assert not res.get("isError"), f"acknowledge упал: {res}"
         res = await server.call_tool(
             "incident_create_summary",
-            {"incident_id": "INC-002", "summary": "Причина: кэш не инвалидируется"},
+            {"incident_id": "INC-001", "summary": "Причина: кэш не инвалидируется"},
         )
         assert not res.get("isError"), f"create_summary упал: {res}"
+
+        # Проверяем, что write-tools реально изменили состояние в БД.
+        res = await server.call_tool("incident_get", {"incident_id": "INC-001"})
+        text = "\n".join(
+            item["text"] for item in res["content"] if item.get("type") == "text"
+        )
+        assert "acknowledged" in text, "incident_acknowledge не изменил статус"
+        assert "кэш не инвалидируется" in text, "incident_create_summary не сохранил сводку"
     finally:
         await server.close()
